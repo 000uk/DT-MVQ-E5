@@ -2,7 +2,6 @@ from tqdm import tqdm
 import torch
 import torch.nn.functional as F
 from .loss import SupervisedContrastiveLoss
-from .utils import calc_grad_norm
 
 class DualDistillationTrainer:
     """
