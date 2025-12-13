@@ -78,7 +78,7 @@ class DualDistillationTrainer:
 
         # for step, (batch_inputs, labels) in enumerate(tqdm(self.train_loader, desc = f"Epoch: {epoch+1}")):
         for batch_inputs, labels in tqdm(self.train_loader, desc = f"Epoch: {epoch+1}"):
-            batch_inputs = {k: v.to(self.device) for k, v in batch_inputs.item()}
+            batch_inputs = {k: v.to(self.device) for k, v in batch_inputs.items()}
             labels = labels.to(self.device)
 
             with torch.no_grad():
