@@ -1,0 +1,25 @@
+# [Experiment Info]
+exp_name: "phase2_multi_vector" # 결과 폴더 이름이 됨
+seed: 42
+
+# [Model Settings]
+model:
+  backbone: "intfloat/multilingual-e5-small"
+  head:
+    num_vectors: 2  # Phase 1 실험 땐 1로 바꾸면 됨
+    input_dim: 384
+
+# [Training Settings]
+train:
+  batch_size: 32
+  epochs: 10
+  lr: 1.0e-3
+  warmup_ratio: 0.05 # 요청하신 0.05
+  
+# [Dataset]
+data_path: "data/book_meta.parquet"
+
+# [Methodology] (Trainer에서 쓰는 것들)
+alpha: 0.8        # Genre vs Content KD 비중
+beta: 0.9         # GradNorm Moving Average
+target_scale: 0.6 # GradNorm Target
