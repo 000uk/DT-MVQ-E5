@@ -43,11 +43,10 @@ def main(args):
     teacher_model.to(device)
     for param in teacher_model.parameters():
         param.requires_grad = False
-    
-    config = {"r": 16, "alpha": 32, "dropout": 0.1}
+
     model = BookEmbeddingModel(
         model_name=config['model']['backbone'],
-        lora_config=config
+        lora_config=config['model']['lora']
     )
     model.to(device)
 
@@ -73,7 +72,7 @@ def main(args):
     best_mrr = 0.0
     history = [] # 로그 저장용 리스트
     for epoch in range(config['train']['epochs']):
-        train_loss = trainer.train_epoch(epoch + 1)
+        train_loss = trainer.train_epoch(epoch)
         val_mrr = trainer.validation(valid_loader, k=10)
         print(f"📊 [Epoch {epoch+1}] Loss: {train_loss:.4f} | MRR: {val_mrr:.4f}")
 

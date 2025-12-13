@@ -40,7 +40,7 @@ class E5LoRABackbone(nn.Module):
         
         self.config = self.encoder.config # hidden_size 같은거 head에서 알아야함
     
-    def forward(self, **inputs):
-        outputs = self.encoder(**inputs)
+    def forward(self, input_ids, attention_mask, **kwargs):
+        outputs = self.encoder(input_ids=input_ids, attention_mask=attention_mask, **kwargs)
         # return outputs.last_hidden_state[:, 0] single vector 테스트할땐 일케 했는디..
         return outputs.last_hidden_state # head에 넣을거라 CLS pooling 안함

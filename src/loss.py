@@ -15,6 +15,8 @@ class SupervisedContrastiveLoss(nn.Module):
         pos_sim: anchor와 pos 샘플들의 유사도 벡터
         neg_sim: anchor와 neg 샘플들의 유사도 벡터
         """
+        k = max(3, int(embeddings.size(0) * self.neg_ratio))
+
         similarity = torch.matmul(embeddings, embeddings.T) # 임배딩값 self 내적 -> 각 샘플당 유사도
         
         labels_eq = labels.unsqueeze(1) == labels.unsqueeze(0) # 브로드캐스팅
@@ -24,6 +26,8 @@ class SupervisedContrastiveLoss(nn.Module):
         
         sim_for_neg = similarity.clone()
         sim_for_neg.masked_fill_(labels_eq, -1e9)
+
+        # neg_sim = similarity[labels.unsqueeze(0) != labels.unsqueeze(1)]
         neg_sim, _ = sim_for_neg.topk(k, dim=1)
 
         # loss 확대: 정답(0.8/0.05=16), 오답(0.7/0.05=14) => exp(16) ≈ 8,886,110 vs exp(14) ≈ 1,202,604 7배 이상 차이남

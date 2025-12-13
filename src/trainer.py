@@ -62,8 +62,15 @@ class DualDistillationTrainer:
         # retain_graph=True: 뒤에 진짜 backward()를 또 해야 하므로 그래프를 날리면 안 됨
         grads = torch.autograd.grad(loss, params, retain_graph=True, allow_unused=True)
 
-        if grads is None: return 0.0
-        return torch.norm(grads) # Norm 합산 (L2 norm 임)
+        if not grads or grads[0] is None: 
+            return 0.0
+
+        total_norm = 0.0
+        for g in grads:
+            if g is not None:
+                total_norm += g.data.norm(2).item() ** 2
+
+        return total_norm ** 0.5
 
     def train_epoch(self, epoch):
         self.model.train()
@@ -71,7 +78,7 @@ class DualDistillationTrainer:
 
         # for step, (batch_inputs, labels) in enumerate(tqdm(self.train_loader, desc = f"Epoch: {epoch+1}")):
         for batch_inputs, labels in tqdm(self.train_loader, desc = f"Epoch: {epoch+1}"):
-            batch_inputs = {k: v.to(self.device) for k, v in batch_inputs}
+            batch_inputs = {k: v.to(self.device) for k, v in batch_inputs.item()}
             labels = labels.to(self.device)
 
             with torch.no_grad():

@@ -5,14 +5,18 @@ seed: 42
 # [Model Settings]
 model:
   backbone: "intfloat/multilingual-e5-small"
+  lora:
+    r: 16
+    alpha: 32
+    dropout: 0.1
   head:
     num_vectors: 2  # Phase 1 실험 땐 1로 바꾸면 됨
     input_dim: 384
 
 # [Training Settings]
 train:
-  batch_size: 32
-  epochs: 10
+  batch_size: 256 # 32일땐 loss가 nan 생기네..
+  epochs: 20
   lr: 1.0e-3
   warmup_ratio: 0.05 # 요청하신 0.05
   
