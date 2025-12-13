@@ -209,8 +209,10 @@ __marimo__/
 # Git configuration folder
 .git/
 
-# Data folder (can be used to store raw or processed datasets)
-data/
+# data 폴더는 Git에 추가하되, 그 안의 모든 파일은 제외
+data/*
+!data/.gitkeep
 
-# Saved model folder (for machine learning models)
-saved_model/
+# saved_model 폴더는 Git에 추가하되, 그 안의 모든 파일은 제외
+saved_model/*
+!saved_model/.gitkeep
