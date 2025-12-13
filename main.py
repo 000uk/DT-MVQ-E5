@@ -43,10 +43,11 @@ def main(args):
     teacher_model.to(device)
     for param in teacher_model.parameters():
         param.requires_grad = False
+    
+    config = {"r": 16, "alpha": 32, "dropout": 0.1}
     model = BookEmbeddingModel(
         model_name=config['model']['backbone'],
-        num_vectors=config['model']['head']['num_vectors'],
-        input_dim=config['model']['head']['input_dim']
+        lora_config=config
     )
     model.to(device)
 
