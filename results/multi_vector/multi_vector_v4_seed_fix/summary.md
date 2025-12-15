@@ -1,0 +1,9 @@
+원래 main.py 순서가 `1. seed 고정` -> `2. data_loader` -> `3. model 정의` 일케였는데.... 
+mrr 성능이 주피터 환경에서 독립루프로 할때보다 안나왔음...
+
+사실 주피터 환경에서 독립 루프로 테스트할땐 `seed 고정` 바로 뒤에 `model 정의`를 했었음!!!
+
+model head에 learnable query가 있는데 얘가 seed에 영향을 많이 받는데.. (자세한건 `RNG`인가 뭐시긴가..)
+main.py에서 data_loader 뒤에 model을 정의하니까 query가 독립 루프때의 값이랑 많이 달라짐...
+
+그래서 다시 main.py를  `1. seed 고정` -> `2. model 정의` ->  `2. data_loader` 일케 바꾸니까 성능 좋아진듯?!

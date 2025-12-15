@@ -3,11 +3,10 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 class SupervisedContrastiveLoss(nn.Module):
-    def __init__(self, temperature=0.07, neg_ratio=0.1, noise_scale=0.0):
+    def __init__(self, temperature=0.05, neg_ratio=0.2):
         super().__init__()
         self.temperature = temperature
         self.neg_ratio = neg_ratio
-        self.noise_scale = noise_scale
 
     def forward(self, embeddings, labels):
         """
@@ -43,23 +42,24 @@ class SupervisedContrastiveLoss(nn.Module):
         # 그림 mean은 왜 하는거지... 배치내 모든 loss를 평균 내는것임! -> 이번 배치의 loss는 0.36다~
 
         return loss
-    
 
+class DDSLLoss(nn.Module): # 이건 서로 도와주는 loss일때 좋은데 우리 태스트랑은 안맞네
+    def __init__(self, num_tasks=3):
+        super().__init__()
+        # 학습 가능한 파라미터 (초기값 0.0 -> variance 1.0)
+        self.log_vars = nn.Parameter(torch.zeros(num_tasks))
+
+    def forward(self, loss_cont, loss_kd_genre, loss_kd_content):
+        # 1. Contrastive Loss (Genre Vector)
+        precision1 = torch.exp(-self.log_vars[0])
+        loss1 = precision1 * loss_cont + 0.5 * self.log_vars[0]
+
+        # 2. Genre KD Loss (Genre Vector -> Teacher)
+        precision2 = torch.exp(-self.log_vars[1])
+        loss2 = precision2 * loss_kd_genre + 0.5 * self.log_vars[1]
         
+        # 3. Content KD Loss (Content Vector -> Teacher)
+        precision3 = torch.exp(-self.log_vars[2])
+        loss3 = precision3 * loss_kd_content + 0.5 * self.log_vars[2]
 
-    # [필살기 1] Orthogonality Check (학습 때만 계산해서 리턴)
-        if self.training:
-            v_genre = embeddings[:, 0, :]
-            v_content = embeddings[:, 1, :]
-            
-            # 두 벡터가 얼마나 닮았는지(섞였는지) 계산
-            ortho_loss = self.calculate_ortho_loss(v_genre, v_content)
-            return embeddings, ortho_loss
-            
-        return embeddings
-
-    def calculate_ortho_loss(self, v1, v2):
-        # 벡터가 정규화되어 있다고 가정하면 내적(Dot Product)이 곧 코사인 유사도
-        # 서로 수직이면 내적값은 0이 됨
-        dot_product = torch.sum(v1 * v2, dim=-1)
-        return torch.mean(dot_product ** 2)
+        return loss1 + loss2 + loss3
