@@ -6,6 +6,9 @@ import torch.nn.functional as F
 import torch.optim as optim
 import pandas as pd
 from transformers import AutoModel, AutoTokenizer, get_cosine_schedule_with_warmup, get_linear_schedule_with_warmup
+from datasets import Dataset
+from sklearn.preprocessing import LabelEncoder
+from torch.utils.data import DataLoader, random_split
 
 # 사용자 정의 모듈 임포트 (경로에 맞게 수정)
 from src.utils import set_seed, calc_grad_norm
@@ -75,7 +78,72 @@ def main(args):
     data_path = config['data_path']
     batch_size = config['train']['batch_size']
     tokenizer = AutoTokenizer.from_pretrained(config['model']['backbone'])
-    train_loader, valid_loader = get_loader(data_path, batch_size, tokenizer)
+    
+    
+    book_path = 'data/book_meta.parquet'
+    books = pd.read_parquet(book_path)
+    
+    def build_text(row): # 입력 텍스트 생성 (타이틀 + 설명 + 저자 등 결합)
+        parts = [
+            f"Title: {row['title']} |",
+            # f"Category: {row['category']} |", # oracle
+            f"Description: {row['description']}"
+        ]
+        return " ".join( # 리스트의 문자열들을 공백으로 연결할건데.....
+            [p for p in parts if isinstance(p, str)] # NaN이나 None이 있으면 제외함
+        ) # 최종적으로 하나의 문장 형태로 반환한다고 함!! "Title: ... Category: ... Description: ..."
+
+    books["text"] = books.apply(build_text, axis=1) # 새 컬럼 text에 대해서.... 문장 만듦
+    
+    # 100개 미만인 카테고리는 노이즈로 간주하고 삭제
+    counts = books['category'].value_counts()
+    valid_categories = counts[counts > 100].index
+    books = books[books['category'].isin(valid_categories)]
+    
+    dataset = Dataset.from_pandas(books)
+    
+    le = LabelEncoder()
+    le.fit(dataset['category'])   # 전체 데이터로 학습
+    
+    def encode_label(x):
+        return {"label": le.transform([x["category"]])[0]}
+    
+    dataset = dataset.map(encode_label)
+    
+    num_classes = len(le.classes_)
+    
+    # Transformer 모델은 이런 raw 텍스트를 바로 처리 못 하고
+    # 토크나이저를 거쳐 tensor(batch_input_ids, batch_attention_mask) 형태가 필요함.
+    def collate_fn(batch): # DataLoader가 batch마다 호출
+        # texts = [f"passage: {x['text']}" for x in batch]
+        texts = [f"query: {x['text']}" for x in batch]
+        labels = torch.tensor([x['label'] for x in batch])  # 라벨을 int 리스트 → torch.tensor 로 변환
+    
+        """
+        토크나이저:
+        텍스트를 token id로 변환 (input_ids), attention_mask 생성,
+        batch의 최대 length에 맞춰 패딩, 출력 타입은 PyTorch tensor
+    
+        { 'input_ids': tensor([[101,  ... , 102], ...]),
+          'attention_mask': tensor([[1,1,1,0,0...], ...) }
+        """
+        inputs = tokenizer(
+          texts, padding=True, truncation=True, max_length=256, return_tensors="pt")
+    
+        return inputs, labels
+    
+    total_len = len(dataset)
+    train_len = int(total_len * 0.8)
+    valid_len = total_len - train_len
+    
+    train_dataset, valid_dataset = random_split(dataset, [train_len, valid_len])
+    
+    train_loader = DataLoader(
+        train_dataset, batch_size=128, shuffle=True, collate_fn=collate_fn
+    )
+    valid_loader = DataLoader(
+        valid_dataset, batch_size=128, shuffle=False, collate_fn=collate_fn
+    )
 
     print("📚 Loading Trainer...")
     optimizer = optim.AdamW(model.parameters(), lr=float(config['train']['lr']))

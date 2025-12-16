@@ -1,0 +1,22 @@
+data_path: data/book_meta.parquet
+exp_name: v18_multi_two_head_messy
+model:
+  backbone: intfloat/multilingual-e5-small
+  head:
+    input_dim: 384
+    num_vectors: 2
+  lora:
+    alpha: 32
+    dropout: 0.1
+    r: 16
+  weight:
+    kd: 50.0
+    scl: 0.1
+seed: 42
+train:
+  batch_size: 128
+  epochs: 20
+  lr: 0.001
+  warmup_ratio: 0.1
+valid:
+  mrr_ratio: 0.3

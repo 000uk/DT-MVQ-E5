@@ -5,6 +5,7 @@ from .heads.multi_vector import MultiVectorHead
 
 class BookEmbeddingModel(nn.Module):
     def __init__(self, model_name: str, lora_config: dict):
+        super().__init__()
         self.backbone = E5LoRABackbone(model_name, lora_config)
         self.head = MultiVectorHead(num_vectors=2, input_dim=self.backbone.config.hidden_size)
     

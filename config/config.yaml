@@ -1,5 +1,5 @@
 # [Experiment Info]
-exp_name: "phase2_multi_vector" # 결과 폴더 이름이 됨
+exp_name: "v18_multi_two_head_messy"
 seed: 42
 
 # [Model Settings]
@@ -12,18 +12,20 @@ model:
   head:
     num_vectors: 2  # Phase 1 실험 땐 1로 바꾸면 됨
     input_dim: 384
+  weight:
+    scl: 0.1
+    kd: 50.0
 
 # [Training Settings]
 train:
-  batch_size: 256 # 32일땐 loss가 nan 생기네..
+  batch_size: 128
   epochs: 20
   lr: 1.0e-3
-  warmup_ratio: 0.05 # 요청하신 0.05
-  
+  warmup_ratio: 0.1
+
+# [Valid Settings]
+valid:
+  mrr_ratio: 0.3
+
 # [Dataset]
 data_path: "data/book_meta.parquet"
-
-# [Methodology] (Trainer에서 쓰는 것들)
-alpha: 0.8        # Genre vs Content KD 비중
-beta: 0.9         # GradNorm Moving Average
-target_scale: 0.6 # GradNorm Target

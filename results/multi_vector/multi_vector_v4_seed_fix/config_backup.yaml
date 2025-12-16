@@ -1,0 +1,20 @@
+alpha: 0.8
+beta: 0.95
+data_path: data/book_meta.parquet
+exp_name: multi_vector_v4_seed
+model:
+  backbone: intfloat/multilingual-e5-small
+  head:
+    input_dim: 384
+    num_vectors: 2
+  lora:
+    alpha: 32
+    dropout: 0.1
+    r: 16
+seed: 42
+target_scale: 0.6
+train:
+  batch_size: 128
+  epochs: 20
+  lr: 0.001
+  warmup_ratio: 0.05
