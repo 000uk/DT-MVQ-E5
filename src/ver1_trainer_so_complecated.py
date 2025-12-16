@@ -116,7 +116,6 @@ class DualDistillationTrainer:
             # content_global = content_vectors.mean(dim=1)  # (B, D)
             # content_global = F.normalize(content_global, p=2, dim=1)
             # loss_kd = mse_or_cosine(content_global, teacher_norm)
-
             loss_kd_combined = alpha * loss_kd_genre + (1 - self.alpha) * loss_kd_content
 
             # gradient 계산

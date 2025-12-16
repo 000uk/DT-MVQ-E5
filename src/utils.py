@@ -31,7 +31,7 @@ def calculate_mrr(final_similarity, all_labels, k=10):
             reciprocal_rank.append(0.0)
         else:
             reciprocal_rank.append(1.0 / (pos_positions[0].item() + 1))
-
+            
     return sum(reciprocal_rank) / len(reciprocal_rank)
 
 def calc_grad_norm(loss, model):
